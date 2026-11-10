@@ -1,0 +1,126 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Linux Edge Monitor Metrics",
+  "description": "Monitoring data collected by the Linux Edge Agent",
+  "type": "object",
+
+  "required": [
+    "timestamp",
+    "device_id",
+    "agent_version",
+    "metrics"
+  ],
+
+  "properties": {
+    "timestamp": {
+      "type": "string",
+      "format": "date-time"
+    },
+
+    "device_id": {
+      "type": "string",
+      "minLength": 1
+    },
+
+    "agent_version": {
+      "type": "string",
+      "minLength": 1
+    },
+
+    "metrics": {
+      "type": "object",
+      "required": ["cpu", "memory", "disk"],
+
+      "properties": {
+        "cpu": {
+          "type": "object",
+          "required": ["usage_percentage"],
+
+          "properties": {
+            "usage_percentage": {
+              "type": "number",
+              "minimum": 0,
+              "maximum": 100
+            }
+          },
+
+          "additionalProperties": false
+        },
+
+        "memory": {
+          "type": "object",
+          "required": [
+            "usage_percentage",
+            "used_mb",
+            "available_mb"
+          ],
+
+          "properties": {
+            "usage_percentage": {
+              "type": "number",
+              "minimum": 0,
+              "maximum": 100
+            },
+
+            "used_mb": {
+              "type": "integer",
+              "minimum": 0
+            },
+
+            "available_mb": {
+              "type": "integer",
+              "minimum": 0
+            }
+          },
+
+          "additionalProperties": false
+        },
+
+        "disk": {
+          "type": "object",
+          "required": [
+            "usage_percentage",
+            "used_gb",
+            "available_gb",
+            "read_kib_per_second",
+            "write_kib_per_second"
+          ],
+
+          "properties": {
+            "usage_percentage": {
+              "type": "number",
+              "minimum": 0,
+              "maximum": 100
+            },
+
+            "used_gb": {
+              "type": "number",
+              "minimum": 0
+            },
+
+            "available_gb": {
+              "type": "number",
+              "minimum": 0
+            },
+
+            "read_kib_per_second": {
+              "type": "number",
+              "minimum": 0
+            },
+
+            "write_kib_per_second": {
+              "type": "number",
+              "minimum": 0
+            }
+          },
+
+          "additionalProperties": false
+        }
+      },
+
+      "additionalProperties": false
+    }
+  },
+
+  "additionalProperties": false
+}

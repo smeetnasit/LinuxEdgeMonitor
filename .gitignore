@@ -1,0 +1,40 @@
+# Compiled files
+agent/bin/
+agent/obj/
+*.o
+*.d
+
+# Generated monitoring output and logs
+metrics.json
+metrics_only.json
+*.log
+
+# Backup files
+*.save
+*.save.*
+
+# Python generated files
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+
+# Environment variables and secrets
+.env
+.env.*
+!.env.example
+
+# Editor and operating system files
+.vscode/
+.idea/
+*.swp
+.DS_Store
+Thumbs.db
+
+# Compiled Day 01 exercises
+day01/cpu_core_monitor
+day01/cpu_monitor
+day01/disk_monitor
+day01/disk_space_monitor
+day01/hello
+day01/memory_monitor
