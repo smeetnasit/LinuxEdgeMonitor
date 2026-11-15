@@ -38,12 +38,13 @@ $(TARGET): $(OBJECTS)
 $(OBJ_DIR)/%.o: agent/src/%.c
 	$(CC) $(CFLAGS) $(DEPFLAGS) -c $< -o $@
 
-test: $(TEST_TARGET) $(MEMORY_TEST_TARGET) $(DISK_SPACE_TEST_TARGET) $(DISK_IO_TEST_TARGET)
+test: $(TEST_TARGET) $(MEMORY_TEST_TARGET) $(DISK_SPACE_TEST_TARGET) $(DISK_IO_TEST_TARGET) $(TARGET)
 	./$(TEST_TARGET)
 	./$(MEMORY_TEST_TARGET)
 	./$(DISK_SPACE_TEST_TARGET)
 	./$(DISK_IO_TEST_TARGET)
 	$(PYTHON) tests/validate_metrics.py
+	$(PYTHON) tests/test_integration.py
 
 $(TEST_TARGET): tests/test_cpu_monitor.c agent/src/cpu_monitor.c agent/include/cpu_monitor.h
 	$(CC) $(CFLAGS) tests/test_cpu_monitor.c agent/src/cpu_monitor.c -o $@
