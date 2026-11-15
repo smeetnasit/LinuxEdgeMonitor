@@ -50,34 +50,34 @@ void print_metrics_json(
         return;
     }
 
-    printf("{\n");
+    printf("{");
 
-    printf("  \"timestamp\": \"%s\",\n", timestamp);
+    printf("\"timestamp\":\"%s\",", timestamp);
 
-    printf("  \"device_id\": \"%s\",\n", device_id);
+    printf("\"device_id\":\"%s\",", device_id);
 
-    printf("  \"agent_version\": \"1.0.0\",\n");
+    printf("\"agent_version\":\"1.0.0\",");
 
-    printf("  \"metrics\": {\n");
+    printf("\"metrics\":{");
 
-    printf("    \"cpu\": {\n");
-    printf("      \"usage_percentage\": %.2f\n", cpu_usage);
-    printf("    },\n");
+    printf("\"cpu\":{");
+    printf("\"usage_percentage\":%.2f", cpu_usage);
+    printf("},");
 
-    printf("    \"memory\": {\n");
-    printf("      \"usage_percentage\": %.2f,\n", memory->usage_percentage);
-    printf("      \"used_mb\": %lu,\n", memory->used_mb);
-    printf("      \"available_mb\": %lu\n", memory->available_mb);
-    printf("    },\n");
+    printf("\"memory\":{");
+    printf("\"usage_percentage\":%.2f,", memory->usage_percentage);
+    printf("\"used_mb\":%lu,", memory->used_mb);
+    printf("\"available_mb\":%lu", memory->available_mb);
+    printf("},");
 
-    printf("    \"disk\": {\n");
-    printf("      \"usage_percentage\": %.2f,\n", disk->usage_percentage);
-    printf("      \"used_gb\": %.2f,\n", disk->used_gb);
-    printf("      \"available_gb\": %.2f,\n", disk->available_gb);
-    printf("      \"read_kib_per_second\": %.2f,\n", disk_io->read_speed_kbps);
-    printf("      \"write_kib_per_second\": %.2f\n", disk_io->write_speed_kbps);
-    printf("    }\n");
-    printf("  }\n");
+    printf("\"disk\":{");
+    printf("\"usage_percentage\":%.2f,", disk->usage_percentage);
+    printf("\"used_gb\":%.2f,", disk->used_gb);
+    printf("\"available_gb\":%.2f,", disk->available_gb);
+    printf("\"read_kib_per_second\":%.2f,", disk_io->read_speed_kbps);
+    printf("\"write_kib_per_second\":%.2f", disk_io->write_speed_kbps);
+    printf("}");
 
+    printf("}");
     printf("}\n");
 }
