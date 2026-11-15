@@ -1,15 +1,18 @@
-
 import json
+import os
 import signal
 import subprocess
-import time
 from pathlib import Path
-
 from jsonschema import Draft202012Validator, FormatChecker
 
 
 PROJECT_ROOT = Path(__file__).resolve().parent.parent
-AGENT = PROJECT_ROOT / "agent/bin/linux_edge_agent"
+AGENT = Path(
+    os.environ.get(
+        "LINUX_EDGE_AGENT",
+        str(PROJECT_ROOT / "agent/bin/linux_edge_agent")
+    )
+)
 SCHEMA_FILE = PROJECT_ROOT / "docs/metrics.schema.json"
 
 MINIMUM_SAMPLES = 2
@@ -37,8 +40,13 @@ def main():
 
     print("[INFO] Starting Linux Edge Monitor...")
 
+    if AGENT.suffix == ".py":
+        agent_command = ["python3", str(AGENT)]
+    else:
+        agent_command = [str(AGENT)]
+
     process = subprocess.Popen(
-        [str(AGENT)],
+        agent_command,
         stdout=subprocess.PIPE,
         stderr=subprocess.PIPE,
         text=True
@@ -67,6 +75,12 @@ def main():
 
             process.kill()
             stdout, stderr = process.communicate()
+
+            if process.returncode == -signal.SIGKILL:
+                print("[PASS] Agent was forcefully terminated with SIGKILL.")
+            else:
+                print("[FAIL] Agent termination could not be confirmed.")
+                print("Return code:", process.returncode)
 
             print(stderr)
             return 1
