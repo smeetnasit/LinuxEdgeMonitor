@@ -12,6 +12,7 @@ TEST_TARGET = agent/bin/test_cpu_monitor
 MEMORY_TEST_TARGET = agent/bin/test_memory_monitor
 DISK_SPACE_TEST_TARGET = agent/bin/test_disk_space_monitor
 DISK_IO_TEST_TARGET = agent/bin/test_disk_io_monitor
+METRICS_VALIDATION_TEST_TARGET = agent/bin/test_metrics_validation
 
 OBJ_DIR = agent/obj
 
@@ -20,7 +21,8 @@ SOURCES = agent/src/main.c \
           agent/src/memory_monitor.c \
           agent/src/disk_space_monitor.c \
           agent/src/disk_io_monitor.c \
-          agent/src/json_output.c
+          agent/src/json_output.c \
+          agent/src/metrics_validation.c
 
 OBJECTS = $(SOURCES:agent/src/%.c=$(OBJ_DIR)/%.o)
 
@@ -38,11 +40,12 @@ $(TARGET): $(OBJECTS)
 $(OBJ_DIR)/%.o: agent/src/%.c
 	$(CC) $(CFLAGS) $(DEPFLAGS) -c $< -o $@
 
-test: $(TEST_TARGET) $(MEMORY_TEST_TARGET) $(DISK_SPACE_TEST_TARGET) $(DISK_IO_TEST_TARGET) $(TARGET)
+test: $(TEST_TARGET) $(MEMORY_TEST_TARGET) $(DISK_SPACE_TEST_TARGET) $(DISK_IO_TEST_TARGET) $(METRICS_VALIDATION_TEST_TARGET) $(TARGET)
 	./$(TEST_TARGET)
 	./$(MEMORY_TEST_TARGET)
 	./$(DISK_SPACE_TEST_TARGET)
 	./$(DISK_IO_TEST_TARGET)
+	./$(METRICS_VALIDATION_TEST_TARGET)
 	$(PYTHON) tests/validate_metrics.py
 	$(PYTHON) tests/test_integration.py
 	$(PYTHON) tests/test_negative_integration.py
@@ -58,11 +61,13 @@ $(DISK_SPACE_TEST_TARGET): tests/test_disk_space_monitor.c agent/src/disk_space_
 
 $(DISK_IO_TEST_TARGET): tests/test_disk_io_monitor.c agent/src/disk_io_monitor.c agent/include/disk_io_monitor.h
 	$(CC) $(CFLAGS) tests/test_disk_io_monitor.c agent/src/disk_io_monitor.c -o $@
+$(METRICS_VALIDATION_TEST_TARGET): tests/test_metrics_validation.c agent/src/metrics_validation.c agent/include/metrics_validation.h
+	$(CC) $(CFLAGS) tests/test_metrics_validation.c agent/src/metrics_validation.c -o $@
 
 -include $(DEPFILES)
 
 clean:
-	rm -f $(OBJ_DIR)/*.o $(OBJ_DIR)/*.d $(TARGET) $(TEST_TARGET) $(MEMORY_TEST_TARGET) $(DISK_SPACE_TEST_TARGET) $(DISK_IO_TEST_TARGET)
+	rm -f $(OBJ_DIR)/*.o $(OBJ_DIR)/*.d $(TARGET) $(TEST_TARGET) $(MEMORY_TEST_TARGET) $(DISK_SPACE_TEST_TARGET) $(DISK_IO_TEST_TARGET) $(METRICS_VALIDATION_TEST_TARGET)
 
 .PHONY: all setup test clean
 

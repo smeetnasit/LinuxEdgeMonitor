@@ -10,6 +10,7 @@
 #include "memory_monitor.h"
 #include "disk_space_monitor.h"
 #include "disk_io_monitor.h"
+#include "metrics_validation.h"
 
 volatile sig_atomic_t running = 1;
 
@@ -61,14 +62,14 @@ int main(void)
     /* Take the initial CPU reading */
     if (!read_cpu_stats(&previous_cpu))
     {
-        printf("Error: Could not read initial CPU statistics.\n");
+        fprintf(stderr, "Error: Could not read initial CPU statistics.\n");
         return 1;
     }
 
     /* Take the initial disk I/O reading */
     if (!read_disk_counters(&previous_disk))
     {
-        printf("Error: Could not read initial disk counters.\n");
+        fprintf(stderr, "Error: Could not read initial disk counters.\n");
         return 1;
     }
 
@@ -92,71 +93,87 @@ int main(void)
             break;
         }
 
+	/* Track whether all required metrics are valid */
+        int sample_valid = 1;
 
         /* CPU monitoring */
+        if (read_cpu_stats(&current_cpu))
+        {
+            cpu_usage =
+                calculate_cpu_usage(&previous_cpu, &current_cpu);
 
-	if (read_cpu_stats(&current_cpu))
-	{
-          cpu_usage =
-          calculate_cpu_usage(&previous_cpu, &current_cpu);
-
-	  previous_cpu = current_cpu;
-	}
-	else
-	{
-          cpu_usage = -1.0;
-	}
+            /* Update baseline for the next CPU calculation */
+            previous_cpu = current_cpu;
+        }
+        else
+        {
+            fprintf(stderr, "[ERROR] Failed to read CPU statistics.\n");
+            sample_valid = 0;
+        }
 
         /* Memory monitoring */
-
-	if (!get_memory_stats(&memory))
-	{
-         memory.usage_percentage = -1.0;
-	}
+        if (!get_memory_stats(&memory))
+        {
+            fprintf(stderr, "[ERROR] Failed to collect memory statistics.\n");
+            sample_valid = 0;
+        }
 
         /* Disk space monitoring */
-	if (!get_disk_space_stats(&disk))
-	{
-          disk.usage_percentage = -1.0;
-	}
+        if (!get_disk_space_stats(&disk))
+        {
+            fprintf(stderr, "[ERROR] Failed to collect disk space statistics.\n");
+            sample_valid = 0;
+        }
 
         /* Disk I/O monitoring */
-	if (read_disk_counters(&current_disk))
-	{
-    	  if (!calculate_disk_io_speed(
-            &previous_disk,
-            &current_disk,
-            actual_interval_seconds,
-            &disk_io))
-    	   {
-             disk_io.read_speed_kbps = -1.0;
-             disk_io.write_speed_kbps = -1.0;
-    	   }
+        if (read_disk_counters(&current_disk))
+        {
+            if (!calculate_disk_io_speed(
+                    &previous_disk,
+                    &current_disk,
+                    actual_interval_seconds,
+                    &disk_io))
+            {
+                fprintf(stderr, "[ERROR] Failed to calculate disk I/O speed.\n");
+                sample_valid = 0;
+            }
 
-           previous_disk = current_disk;
-           previous_sample_time = current_sample_time;
-	}
-	else
-	{
-          disk_io.read_speed_kbps = -1.0;
-          disk_io.write_speed_kbps = -1.0;
-	}
+            /* Update disk baseline after a successful counter read */
+            previous_disk = current_disk;
+            previous_sample_time = current_sample_time;
+        }
+        else
+        {
+            fprintf(stderr, "[ERROR] Failed to read disk I/O counters.\n");
+            sample_valid = 0;
+        }
 
-        /* Print collected metrics as JSON */
-	if (memory.usage_percentage >= 0.0 &&
-           disk.usage_percentage >= 0.0)
-	{
-          print_metrics_json(
-          cpu_usage,
-          &memory,
-          &disk,
-          &disk_io
-          );
-	}
-	else
-	{
-         printf("{\"error\": \"Failed to collect system metrics\"}\n");
-	}
+        /* Validate all collected metrics before JSON output */
+        if (sample_valid &&
+            !are_metrics_valid(
+                cpu_usage,
+                &memory,
+                &disk,
+                &disk_io
+            ))
+        {
+            fprintf(stderr, "[ERROR] Metrics validation failed.\n");
+            sample_valid = 0;
+        }
+        if (sample_valid)
+        {
+            print_metrics_json(
+                cpu_usage,
+                &memory,
+                &disk,
+                &disk_io
+            );
+        }
+        else
+        {
+            fprintf(stderr, "[WARNING] Skipping invalid metrics sample.\n");
+        }
+
     }
 
     fprintf(stderr, "\nStopping Linux Edge Monitor...\n");
