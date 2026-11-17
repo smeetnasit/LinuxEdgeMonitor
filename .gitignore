@@ -38,3 +38,4 @@ day01/disk_monitor
 day01/disk_space_monitor
 day01/hello
 day01/memory_monitor
+/backend/LinuxEdgeMonitor.Infrastructure/obj/Debug/net9.0
