@@ -1,0 +1,20 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net9.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Dapper.Rainbow" Version="2.1.89" />
+    <PackageReference Include="Faithlife.Utility.Dapper" Version="2.0.1" />
+    <PackageReference Include="Microsoft.Data.SqlClient" Version="7.1.2" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\LinuxEdgeMonitor.Application\LinuxEdgeMonitor.Application.csproj" />
+    <ProjectReference Include="..\LinuxEdgeMonitor.Domain\LinuxEdgeMonitor.Domain.csproj" />
+  </ItemGroup>
+
+</Project>
