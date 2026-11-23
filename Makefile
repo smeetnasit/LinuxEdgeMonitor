@@ -1,18 +1,16 @@
 
 CC = gcc
 
-CFLAGS = -Wall -Wextra -std=c11 -Iagent/include
-
+CFLAGS = -Wall -Wextra -std=c11 -Iagent/include $(shell pkg-config --cflags libcurl)
 DEPFLAGS = -MMD -MP
+
+PYTHON = .venv/bin/python
 
 TARGET = agent/bin/linux_edge_agent
 
 TEST_TARGET = agent/bin/test_cpu_monitor
-
 MEMORY_TEST_TARGET = agent/bin/test_memory_monitor
-
 DISK_SPACE_TEST_TARGET = agent/bin/test_disk_space_monitor
-
 DISK_IO_TEST_TARGET = agent/bin/test_disk_io_monitor
 
 OBJ_DIR = agent/obj
@@ -30,8 +28,12 @@ DEPFILES = $(OBJECTS:.o=.d)
 
 all: $(TARGET)
 
+setup:
+	python3 -m venv .venv
+	$(PYTHON) -m pip install -r requirements.txt
+
 $(TARGET): $(OBJECTS)
-	$(CC) $(OBJECTS) -o $(TARGET)
+	$(CC) $(OBJECTS) -o $(TARGET) $(shell pkg-config --libs libcurl)
 
 $(OBJ_DIR)/%.o: agent/src/%.c
 	$(CC) $(CFLAGS) $(DEPFLAGS) -c $< -o $@
@@ -41,7 +43,7 @@ test: $(TEST_TARGET) $(MEMORY_TEST_TARGET) $(DISK_SPACE_TEST_TARGET) $(DISK_IO_T
 	./$(MEMORY_TEST_TARGET)
 	./$(DISK_SPACE_TEST_TARGET)
 	./$(DISK_IO_TEST_TARGET)
-	python3 tests/validate_metrics.py
+	$(PYTHON) tests/validate_metrics.py
 
 $(TEST_TARGET): tests/test_cpu_monitor.c agent/src/cpu_monitor.c agent/include/cpu_monitor.h
 	$(CC) $(CFLAGS) tests/test_cpu_monitor.c agent/src/cpu_monitor.c -o $@
@@ -60,5 +62,5 @@ $(DISK_IO_TEST_TARGET): tests/test_disk_io_monitor.c agent/src/disk_io_monitor.c
 clean:
 	rm -f $(OBJ_DIR)/*.o $(OBJ_DIR)/*.d $(TARGET) $(TEST_TARGET) $(MEMORY_TEST_TARGET) $(DISK_SPACE_TEST_TARGET) $(DISK_IO_TEST_TARGET)
 
-.PHONY: all test clean
+.PHONY: all setup test clean
 
