@@ -1,7 +1,7 @@
 
 CC = gcc
 
-CFLAGS = -Wall -Wextra -std=c11 -Iagent/include
+CFLAGS = -Wall -Wextra -std=c11 -Iagent/include $(shell pkg-config --cflags libcurl)
 DEPFLAGS = -MMD -MP
 
 PYTHON = .venv/bin/python
@@ -22,6 +22,7 @@ SOURCES = agent/src/main.c \
           agent/src/disk_space_monitor.c \
           agent/src/disk_io_monitor.c \
           agent/src/json_output.c \
+          agent/src/http_client.c \
           agent/src/metrics_validation.c
 
 OBJECTS = $(SOURCES:agent/src/%.c=$(OBJ_DIR)/%.o)
@@ -35,7 +36,7 @@ setup:
 	$(PYTHON) -m pip install -r requirements.txt
 
 $(TARGET): $(OBJECTS)
-	$(CC) $(OBJECTS) -o $(TARGET)
+	$(CC) $(OBJECTS) -o $(TARGET) $(shell pkg-config --libs libcurl)
 
 $(OBJ_DIR)/%.o: agent/src/%.c
 	$(CC) $(CFLAGS) $(DEPFLAGS) -c $< -o $@
@@ -49,6 +50,7 @@ test: $(TEST_TARGET) $(MEMORY_TEST_TARGET) $(DISK_SPACE_TEST_TARGET) $(DISK_IO_T
 	$(PYTHON) tests/validate_metrics.py
 	$(PYTHON) tests/test_integration.py
 	$(PYTHON) tests/test_negative_integration.py
+	$(PYTHON) tests/validate_metrics.py
 
 $(TEST_TARGET): tests/test_cpu_monitor.c agent/src/cpu_monitor.c agent/include/cpu_monitor.h
 	$(CC) $(CFLAGS) tests/test_cpu_monitor.c agent/src/cpu_monitor.c -o $@

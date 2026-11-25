@@ -5,6 +5,7 @@
 #include <signal.h>
 #include <time.h>
 #include "json_output.h"
+#include "http_client.h"
 
 #include "cpu_monitor.h"
 #include "memory_monitor.h"
@@ -147,33 +148,51 @@ int main(void)
             fprintf(stderr, "[ERROR] Failed to read disk I/O counters.\n");
             sample_valid = 0;
         }
-
-        /* Validate all collected metrics before JSON output */
+        /* Validate all collected metrics before sending */
         if (sample_valid &&
             !are_metrics_valid(
                 cpu_usage,
                 &memory,
                 &disk,
-                &disk_io
-            ))
+                &disk_io))
         {
             fprintf(stderr, "[ERROR] Metrics validation failed.\n");
             sample_valid = 0;
         }
+
         if (sample_valid)
         {
-            print_metrics_json(
+            char json_buffer[1024];
+
+            if (build_metrics_json(
+                json_buffer,
+                sizeof(json_buffer),
                 cpu_usage,
                 &memory,
                 &disk,
-                &disk_io
-            );
+                &disk_io) == 0)
+            {
+                if (send_metrics_json(json_buffer) != 0)
+                {
+                    fprintf(
+                        stderr,
+                        "[ERROR] Failed to send metrics to API.\n");
+                }
+            }
+            else
+            {
+                fprintf(
+                    stderr,
+                    "[ERROR] Could not build metrics JSON.\n");
+            }
         }
         else
         {
-            fprintf(stderr, "[WARNING] Skipping invalid metrics sample.\n");
+            fprintf(
+                stderr,
+                "[WARNING] Skipping invalid metrics sample.\n");
         }
-
+    
     }
 
     fprintf(stderr, "\nStopping Linux Edge Monitor...\n");

@@ -3,38 +3,38 @@
 
 #include <stdio.h>
 #include <time.h>
-#include <unistd.h>
+#include <string.h>
+
 #include "json_output.h"
 
-void print_metrics_json(
+int build_metrics_json(
+    char *buffer,
+    size_t buffer_size,
     double cpu_usage,
     struct MemoryStats *memory,
     struct DiskSpaceStats *disk,
     struct DiskIOStats *disk_io
 )
 {
-    /* Get Linux device hostname */
-    char device_id[256];
-
-    if (gethostname(device_id, sizeof(device_id)) != 0)
+    if (buffer == NULL ||
+        buffer_size == 0 ||
+        memory == NULL ||
+        disk == NULL ||
+        disk_io == NULL)
     {
-        return;
+        return -1;
     }
 
-    /* Ensure hostname is null-terminated */
-    device_id[sizeof(device_id) - 1] = '\0';
-    /* Get current system time */
-    time_t current_time = time(NULL);
+    const char *device_id = "DEV-1001";
 
-    /* Convert system time to UTC */
+    time_t current_time = time(NULL);
     struct tm utc_time;
 
     if (gmtime_r(&current_time, &utc_time) == NULL)
     {
-        return;
+        return -1;
     }
 
-    /* Format timestamp */
     char timestamp[25];
 
     if (strftime(
@@ -43,41 +43,48 @@ void print_metrics_json(
             "%Y-%m-%dT%H:%M:%SZ",
             &utc_time) == 0)
     {
-        return;
+        return -1;
     }
-    if (memory == NULL || disk == NULL || disk_io == NULL)
+
+    int written = snprintf(
+        buffer,
+        buffer_size,
+        "{"
+        "\"timestamp\":\"%s\","
+        "\"deviceId\":\"%s\","
+        "\"agentVersion\":\"1.0.0\","
+        "\"cpu\":{\"usagePercentage\":%.2f},"
+        "\"memory\":{"
+            "\"usagePercentage\":%.2f,"
+            "\"usedMb\":%lu,"
+            "\"availableMb\":%lu"
+        "},"
+        "\"disk\":{"
+            "\"usagePercentage\":%.2f,"
+            "\"usedGb\":%.2f,"
+            "\"availableGb\":%.2f,"
+            "\"readKibPerSecond\":%.2f,"
+            "\"writeKibPerSecond\":%.2f"
+        "}"
+        "}",
+        timestamp,
+        device_id,
+        cpu_usage,
+        memory->usage_percentage,
+        memory->used_mb,
+        memory->available_mb,
+        disk->usage_percentage,
+        disk->used_gb,
+        disk->available_gb,
+        disk_io->read_speed_kbps,
+        disk_io->write_speed_kbps
+    );
+
+    if (written < 0 || (size_t)written >= buffer_size)
     {
-        return;
+        buffer[0] = '\0';
+        return -1;
     }
 
-    printf("{");
-
-    printf("\"timestamp\":\"%s\",", timestamp);
-
-    printf("\"device_id\":\"%s\",", device_id);
-
-    printf("\"agent_version\":\"1.0.0\",");
-
-    printf("\"metrics\":{");
-
-    printf("\"cpu\":{");
-    printf("\"usage_percentage\":%.2f", cpu_usage);
-    printf("},");
-
-    printf("\"memory\":{");
-    printf("\"usage_percentage\":%.2f,", memory->usage_percentage);
-    printf("\"used_mb\":%lu,", memory->used_mb);
-    printf("\"available_mb\":%lu", memory->available_mb);
-    printf("},");
-
-    printf("\"disk\":{");
-    printf("\"usage_percentage\":%.2f,", disk->usage_percentage);
-    printf("\"used_gb\":%.2f,", disk->used_gb);
-    printf("\"available_gb\":%.2f,", disk->available_gb);
-    printf("\"read_kib_per_second\":%.2f,", disk_io->read_speed_kbps);
-    printf("\"write_kib_per_second\":%.2f", disk_io->write_speed_kbps);
-    printf("}");
-
-    printf("}");
-    printf("}\n");
+    return 0;
 }
