@@ -5,6 +5,7 @@
 #include <signal.h>
 #include <time.h>
 #include "json_output.h"
+#include "http_client.h"
 
 #include "cpu_monitor.h"
 #include "memory_monitor.h"
@@ -142,21 +143,31 @@ int main(void)
           disk_io.write_speed_kbps = -1.0;
 	}
 
-        /* Print collected metrics as JSON */
-	if (memory.usage_percentage >= 0.0 &&
-           disk.usage_percentage >= 0.0)
-	{
-          print_metrics_json(
-          cpu_usage,
-          &memory,
-          &disk,
-          &disk_io
-          );
-	}
-	else
-	{
-         printf("{\"error\": \"Failed to collect system metrics\"}\n");
-	}
+        /* Build JSON and send telemetry to the API */
+        char json_buffer[1024];
+
+        if (memory.usage_percentage >= 0.0 &&
+            disk.usage_percentage >= 0.0)
+        {
+            if (build_metrics_json(
+                    json_buffer,
+                    sizeof(json_buffer),
+                    cpu_usage,
+                    &memory,
+                    &disk,
+                    &disk_io) == 0)
+            {
+                send_metrics_json(json_buffer);
+            }
+            else
+            {
+                fprintf(stderr, "Error: Could not build metrics JSON.\n");
+            }
+        }
+        else
+        {
+            fprintf(stderr, "Error: Failed to collect system metrics.\n");
+        }
     }
 
     fprintf(stderr, "\nStopping Linux Edge Monitor...\n");

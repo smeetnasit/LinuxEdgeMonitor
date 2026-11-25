@@ -20,7 +20,8 @@ SOURCES = agent/src/main.c \
           agent/src/memory_monitor.c \
           agent/src/disk_space_monitor.c \
           agent/src/disk_io_monitor.c \
-          agent/src/json_output.c
+          agent/src/json_output.c \
+          agent/src/http_client.c
 
 OBJECTS = $(SOURCES:agent/src/%.c=$(OBJ_DIR)/%.o)
 
